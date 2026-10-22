@@ -1,0 +1,8 @@
+# Render blueprint: `New > Blueprint` on the repo gives a running deployment.
+# Free-tier disk is ephemeral, so the DB is re-seeded (deterministically) on each cold start.
+services:
+  - type: web
+    name: salary-management
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
