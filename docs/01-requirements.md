@@ -48,3 +48,23 @@ records quickly and safely, and (2) answer "how do we pay people?" without build
 2. Email is the unique identifier for a person.
 3. ~10 countries are enough to demonstrate the multi-country problem.
 4. Terminated employees are deleted (no soft-delete) for this version.
+
+---
+
+## Revision 2 (added after the first version was built)
+The first version above was built and deployed as written. Afterwards three things from its "left out"
+list were brought into scope, because each blocks real use of salary data rather than adding polish:
+
+| Added | Why it moved into scope |
+|-------|-------------------------|
+| **Sign-in** (one HR login, signed token, audit log of changes) | Salary data is the most sensitive data a company holds; a public deployment without a login is not usable. The audit log answers "who changed this salary?". |
+| **Pay history** (effective-dated salary changes with a reason) | "How do we pay people?" quickly becomes "how did pay change?". Keeping only the latest salary loses that the moment someone gets a raise. |
+| **Import from Excel / CSV** | HR starts from spreadsheets, so there has to be a way to load them. Import checks the whole file first and saves nothing if any row is bad, so a half-loaded sheet cannot happen. |
+
+Decisions that came with them: `employees.salary` stays as the current value (the latest history row) so the
+list and insights stay as fast as before; history dates cannot precede the hire date or be in the future; one
+change per employee per day; the import reports every problem with its row number and column.
+
+**Still deliberately out:** SSO and roles (one login is enough for one HR manager), password reset and login
+lock-out, live exchange rates, payroll / tax / benefits, gender or demographic pay analysis (needs its own
+privacy design), and a background job queue for very large imports (the limit is 20,000 rows per file).

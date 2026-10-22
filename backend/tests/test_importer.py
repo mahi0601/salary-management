@@ -155,7 +155,7 @@ class TestPlainMessages:
     def test_unknown_country_lists_the_valid_codes(self):
         message = self.message(country="ZZ")
 
-        assert message.startswith("Unsupported country") and "'US'" in message and "'us'" not in message
+        assert message == "Unsupported country; use one of AU, BR, CA, DE, FR, GB, IN, JP, SG, US"
 
     def test_future_hire_date(self):
         assert self.message(hire_date="2999-01-01") == "Hire date cannot be in the future"

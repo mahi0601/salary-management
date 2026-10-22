@@ -34,7 +34,7 @@ class EmployeeIn(BaseModel):
     def _known_country(cls, value: str) -> str:
         value = value.strip().upper()
         if value not in COUNTRIES:
-            raise ValueError(f"unsupported country; expected one of {sorted(COUNTRIES)}")
+            raise ValueError("unsupported country; use one of " + ", ".join(sorted(COUNTRIES)))
         return value
 
     @field_validator("hire_date")
