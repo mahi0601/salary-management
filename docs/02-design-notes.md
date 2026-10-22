@@ -2,16 +2,8 @@
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  UI["React + MUI (Vite)"] -- "/api/*  JSON" --> R["FastAPI routers\n(employees, insights, meta)"]
-  R --> S["services.py\nuse-cases + rules needing the DB"]
-  R --> I["insights.py\npure statistics"]
-  S --> Repo["repository.py\nall SQL"]
-  R --> Repo
-  Repo --> DB[("SQLite\nemployees")]
-  Seed["app/seed.py"] --> DB
-```
+See the diagrams in the [README](../README.md#architecture): system and deployment, backend
+layers, request flows, data model and the scalability target.
 
 | Layer | Responsibility | Why separate |
 |-------|----------------|--------------|
