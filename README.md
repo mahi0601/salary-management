@@ -16,6 +16,7 @@ Web app for an HR Manager to manage salaries for ~10,000 employees across 10 cou
 - **Pay insights:** headcount, total payroll, average and median; min / P25 / median / P75 / max by country,
   department or job title; salary distribution
 - CSV export of the current filtered view
+- Light/dark theme, loading and result-count feedback, save/delete confirmations
 - Seed script generating 10,000 synthetic employees (deterministic; no real people)
 
 ## Run locally
@@ -33,7 +34,7 @@ Single-process, production-style: `make build`, then
 
 ## Tests
 ```bash
-make test        # backend (pytest, 68 tests, ~1 s) + frontend (vitest, 25 tests)
+make test        # backend (pytest, 69 tests, ~1 s) + frontend (vitest, 25 tests)
 ```
 
 ## Deploy

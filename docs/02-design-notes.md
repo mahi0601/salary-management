@@ -66,7 +66,7 @@ cannot use an index; at 10k rows it is a trivial scan.
 - **Pay history:** an effective-dated `salary_changes` table instead of a single `salary` column.
 
 ## Testing approach
-- **Backend (68 tests):** API tests through `TestClient` with an in-memory DB, written as behaviour
+- **Backend (69 tests):** API tests through `TestClient` with an in-memory DB, written as behaviour
   ("salary range filter compares in USD, not local currency"); pure-function tests for statistics and
   seed determinism; a security test for path traversal in static serving and CSV formula injection.
 - **Frontend (25 tests):** Vitest + Testing Library with the API layer mocked: validation rules, API
