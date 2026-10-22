@@ -1,9 +1,10 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app import repository, services
+from app import csv_export, repository, services
 from app.deps import employee_filters, get_session
 from app.errors import EmployeeNotFound
 from app.repository import EmployeeFilters
@@ -29,6 +30,22 @@ def list_employees(
     )
     return EmployeePage(
         items=[services.to_out(r) for r in rows], total=total, page=page, page_size=page_size
+    )
+
+
+@router.get("/export.csv")
+def export_csv(
+    filters: EmployeeFilters = Depends(employee_filters),
+    sort_by: SortField = "full_name",
+    order: SortOrder = "asc",
+    session: Session = Depends(get_session),
+) -> StreamingResponse:
+    """The current filtered view as CSV, streamed so memory stays flat at any size."""
+    rows = repository.iter_employees(session, filters, sort_by=sort_by, descending=order == "desc")
+    return StreamingResponse(
+        csv_export.rows_as_csv(rows),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="employees.csv"'},
     )
 
 
