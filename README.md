@@ -3,6 +3,8 @@
 Web app for an HR Manager to manage salaries for ~10,000 employees across 10 countries and to answer
 "how do we pay people?". Python (FastAPI + SQLAlchemy + SQLite) backend, React + TypeScript + MUI frontend.
 
+**Live demo:** https://salary-management-fh3n.onrender.com/ (free tier: the first load after idle can take 30-60 s)
+
 - Requirements: [docs/01-requirements.md](docs/01-requirements.md)
 - Design, trade-offs, performance: [docs/02-design-notes.md](docs/02-design-notes.md)
 - AI usage: [docs/03-ai-usage.md](docs/03-ai-usage.md)
