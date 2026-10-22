@@ -8,7 +8,8 @@ seed:
 	cd backend && .venv/bin/python -m app.seed --reset
 
 api:
-	cd backend && .venv/bin/uvicorn app.main:create_app --factory --reload --port 8000
+	cd backend && SALARY_HR_EMAIL=hr@acme.com SALARY_HR_PASSWORD=Acme-HR-Demo-2026 \
+		.venv/bin/uvicorn app.main:create_app --factory --reload --port 8000
 
 web:
 	cd frontend && npm run dev

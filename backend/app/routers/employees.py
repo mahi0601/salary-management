@@ -5,8 +5,9 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app import csv_export, repository, services
-from app.deps import employee_filters, get_session
+from app.deps import current_user, employee_filters, get_session
 from app.errors import EmployeeNotFound
+from app.models import User
 from app.repository import EmployeeFilters
 from app.schemas import EmployeeIn, EmployeeOut, EmployeePage
 
@@ -50,8 +51,10 @@ def export_csv(
 
 
 @router.post("", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
-def create_employee(data: EmployeeIn, session: Session = Depends(get_session)) -> EmployeeOut:
-    return services.to_out(services.create_employee(session, data))
+def create_employee(
+    data: EmployeeIn, session: Session = Depends(get_session), user: User = Depends(current_user)
+) -> EmployeeOut:
+    return services.to_out(services.create_employee(session, data, user.email))
 
 
 @router.get("/{employee_id}", response_model=EmployeeOut)
@@ -64,12 +67,17 @@ def get_employee(employee_id: int, session: Session = Depends(get_session)) -> E
 
 @router.put("/{employee_id}", response_model=EmployeeOut)
 def update_employee(
-    employee_id: int, data: EmployeeIn, session: Session = Depends(get_session)
+    employee_id: int,
+    data: EmployeeIn,
+    session: Session = Depends(get_session),
+    user: User = Depends(current_user),
 ) -> EmployeeOut:
-    return services.to_out(services.update_employee(session, employee_id, data))
+    return services.to_out(services.update_employee(session, employee_id, data, user.email))
 
 
 @router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_employee(employee_id: int, session: Session = Depends(get_session)) -> Response:
-    services.delete_employee(session, employee_id)
+def delete_employee(
+    employee_id: int, session: Session = Depends(get_session), user: User = Depends(current_user)
+) -> Response:
+    services.delete_employee(session, employee_id, user.email)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

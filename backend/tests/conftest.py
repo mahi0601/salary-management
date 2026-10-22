@@ -1,14 +1,43 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app import auth
 from app.database import create_db_engine
 from app.main import create_app
 
+HR_EMAIL, HR_PASSWORD = "hr@acme.com", "correct horse battery"
+JWT_SECRET = "x" * 32
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cheap_password_hashing():
+    # real scrypt cost would add ~50 ms to every test that builds an app
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(auth, "COST_N", 2**4)
+        yield
+
 
 @pytest.fixture
-def client():
+def app():
     # new in-memory DB every test
-    return TestClient(create_app(create_db_engine("sqlite:///:memory:")))
+    engine = create_db_engine("sqlite:///:memory:")
+    return create_app(engine, jwt_secret=JWT_SECRET, hr_user=(HR_EMAIL, HR_PASSWORD))
+
+
+@pytest.fixture
+def anonymous_client(app):
+    return TestClient(app)
+
+
+@pytest.fixture
+def client(app):
+    """Signed in as the HR user, like the real UI."""
+    test_client = TestClient(app)
+    token = test_client.post(
+        "/api/auth/login", json={"email": HR_EMAIL, "password": HR_PASSWORD}
+    ).json()["token"]
+    test_client.headers["Authorization"] = f"Bearer {token}"
+    return test_client
 
 
 def employee_payload(**overrides) -> dict:

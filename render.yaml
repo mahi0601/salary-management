@@ -6,3 +6,12 @@ services:
     runtime: docker
     plan: free
     healthCheckPath: /api/health
+    envVars:
+      # Render invents a long random value, so the signing key is never in the repo
+      - key: SALARY_JWT_SECRET
+        generateValue: true
+      # Demo account for reviewers. The data is synthetic, so this password is public on purpose.
+      - key: SALARY_HR_EMAIL
+        value: hr@acme.com
+      - key: SALARY_HR_PASSWORD
+        value: Acme-HR-Demo-2026

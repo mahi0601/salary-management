@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Date, DateTime, Index, Integer, String, case
+from sqlalchemy import Date, DateTime, Index, Integer, String, Text, case
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.countries import COUNTRIES
@@ -41,3 +41,23 @@ class Employee(Base):
 salary_usd_expr = Employee.salary * case(
     {code: c.usd_rate for code, c in COUNTRIES.items()}, value=Employee.country
 )
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(200), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(200))
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_log"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor: Mapped[str] = mapped_column(String(200))
+    action: Mapped[str] = mapped_column(String(40))
+    # plain int, no foreign key: the log has to outlive a deleted employee
+    employee_id: Mapped[int | None] = mapped_column(Integer, index=True)
+    details: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

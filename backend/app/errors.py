@@ -13,6 +13,13 @@ class EmployeeNotFound(DomainError):
         super().__init__(f"Employee {employee_id} not found")
 
 
+class InvalidCredentials(DomainError):
+    status_code = 401
+
+    def __init__(self):
+        super().__init__("Incorrect email or password")
+
+
 class DuplicateEmail(DomainError):
     status_code = 409
 
