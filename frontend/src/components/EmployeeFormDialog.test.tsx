@@ -26,17 +26,20 @@ const asha: Employee = {
   hire_date: '2022-03-14',
 }
 
+// no artificial pause between keystrokes: the form test types a lot and must not depend on machine speed
+const user = userEvent.setup({ delay: null })
+
 afterEach(() => vi.restoreAllMocks())
 
 async function fillNewEmployee() {
-  await userEvent.type(screen.getByLabelText(/Full name/), '  Max Mueller ')
-  await userEvent.type(screen.getByLabelText(/Email/), 'max@acme.com')
-  await userEvent.type(screen.getByLabelText(/Department/), 'Engineering')
-  await userEvent.type(screen.getByLabelText(/Job title/), 'Software Engineer')
-  await userEvent.click(screen.getByRole('combobox', { name: /Country/ }))
-  await userEvent.click(screen.getByRole('option', { name: /Germany/ }))
-  await userEvent.type(screen.getByLabelText(/Annual base salary/), '90000')
-  await userEvent.type(screen.getByLabelText(/Hire date/), '2023-05-01')
+  await user.type(screen.getByLabelText(/Full name/), '  Max Mueller ')
+  await user.type(screen.getByLabelText(/Email/), 'max@acme.com')
+  await user.type(screen.getByLabelText(/Department/), 'Engineering')
+  await user.type(screen.getByLabelText(/Job title/), 'Software Engineer')
+  await user.click(screen.getByRole('combobox', { name: /Country/ }))
+  await user.click(screen.getByRole('option', { name: /Germany/ }))
+  await user.type(screen.getByLabelText(/Annual base salary/), '90000')
+  await user.type(screen.getByLabelText(/Hire date/), '2023-05-01')
 }
 
 describe('EmployeeFormDialog', () => {
@@ -46,7 +49,7 @@ describe('EmployeeFormDialog', () => {
     render(<EmployeeFormDialog meta={meta} employee={null} onClose={() => {}} onSaved={onSaved} />)
 
     await fillNewEmployee()
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled())
     expect(create).toHaveBeenCalledWith({
@@ -63,8 +66,8 @@ describe('EmployeeFormDialog', () => {
   it('shows the currency of the chosen country next to the salary', async () => {
     render(<EmployeeFormDialog meta={meta} employee={null} onClose={() => {}} onSaved={() => {}} />)
 
-    await userEvent.click(screen.getByRole('combobox', { name: /Country/ }))
-    await userEvent.click(screen.getByRole('option', { name: /Germany/ }))
+    await user.click(screen.getByRole('combobox', { name: /Country/ }))
+    await user.click(screen.getByRole('option', { name: /Germany/ }))
 
     expect(screen.getByText('EUR')).toBeInTheDocument()
   })
@@ -75,7 +78,7 @@ describe('EmployeeFormDialog', () => {
     render(<EmployeeFormDialog meta={meta} employee={asha} onClose={() => {}} onSaved={onSaved} />)
     expect(screen.getByLabelText(/Full name/)).toHaveValue('Asha Rao')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled())
     expect(update).toHaveBeenCalledWith(7, expect.objectContaining({ email: 'asha@acme.com', salary: 100000 }))
@@ -87,7 +90,7 @@ describe('EmployeeFormDialog', () => {
     )
     render(<EmployeeFormDialog meta={meta} employee={asha} onClose={() => {}} onSaved={() => {}} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(await screen.findByText('An employee with email asha@acme.com already exists')).toBeInTheDocument()
   })
@@ -96,7 +99,7 @@ describe('EmployeeFormDialog', () => {
     vi.spyOn(api, 'updateEmployee').mockRejectedValue(new ApiError(500, 'Something went wrong'))
     render(<EmployeeFormDialog meta={meta} employee={asha} onClose={() => {}} onSaved={() => {}} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
   })

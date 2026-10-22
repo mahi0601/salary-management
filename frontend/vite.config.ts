@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     globals: true,
+    testTimeout: 15000, // headroom for slow CI machines; a typical test takes well under a second
     coverage: {
       provider: 'v8',
       include: ['src/**'],
