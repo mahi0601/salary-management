@@ -43,3 +43,7 @@ def test_no_frontend_mounted_when_build_is_absent(client):
 
 def test_missing_file_with_extension_is_a_404_not_the_app_shell(spa_client):
     assert spa_client.get("/favicon.ico").status_code == 404
+
+
+def test_unknown_api_path_is_a_404_not_the_app_shell(spa_client):
+    assert spa_client.get("/api/does-not-exist").status_code == 404

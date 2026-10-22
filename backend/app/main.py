@@ -84,8 +84,8 @@ def _mount_frontend(app: FastAPI) -> None:
         candidate = (static_dir / path).resolve()
         if path and candidate.is_file() and static_dir.resolve() in candidate.parents:
             return FileResponse(candidate)
-        # a missing /something.ico should 404, not come back as the app shell
-        if Path(path).suffix:
+        # a missing /something.ico or a mistyped /api/... should 404, not come back as the app shell
+        if Path(path).suffix or path.startswith("api/"):
             raise HTTPException(status_code=404)
         return FileResponse(index)
 
