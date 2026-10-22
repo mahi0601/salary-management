@@ -39,3 +39,7 @@ def test_path_traversal_cannot_read_files_outside_static_dir(spa_client):
 
 def test_no_frontend_mounted_when_build_is_absent(client):
     assert client.get("/").status_code == 404
+
+
+def test_missing_file_with_extension_is_a_404_not_the_app_shell(spa_client):
+    assert spa_client.get("/favicon.ico").status_code == 404

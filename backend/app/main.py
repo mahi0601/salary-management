@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Engine
@@ -46,5 +46,8 @@ def _mount_frontend(app: FastAPI) -> None:
         candidate = (static_dir / path).resolve()
         if path and candidate.is_file() and static_dir.resolve() in candidate.parents:
             return FileResponse(candidate)
+        # a missing /something.ico should 404, not come back as the app shell
+        if Path(path).suffix:
+            raise HTTPException(status_code=404)
         return FileResponse(index)
 
