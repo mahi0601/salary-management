@@ -1,0 +1,58 @@
+from typing import Literal
+
+from fastapi import APIRouter, Depends, Query, Response, status
+from sqlalchemy.orm import Session
+
+from app import repository, services
+from app.deps import employee_filters, get_session
+from app.errors import EmployeeNotFound
+from app.repository import EmployeeFilters
+from app.schemas import EmployeeIn, EmployeeOut, EmployeePage
+
+router = APIRouter(prefix="/api/employees", tags=["employees"])
+
+SortField = Literal["full_name", "job_title", "department", "country", "hire_date", "salary_usd"]
+SortOrder = Literal["asc", "desc"]
+
+
+@router.get("", response_model=EmployeePage)
+def list_employees(
+    filters: EmployeeFilters = Depends(employee_filters),
+    sort_by: SortField = "full_name",
+    order: SortOrder = "asc",
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    session: Session = Depends(get_session),
+) -> EmployeePage:
+    rows, total = repository.list_employees(
+        session, filters, sort_by=sort_by, descending=order == "desc", page=page, page_size=page_size
+    )
+    return EmployeePage(
+        items=[services.to_out(r) for r in rows], total=total, page=page, page_size=page_size
+    )
+
+
+@router.post("", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
+def create_employee(data: EmployeeIn, session: Session = Depends(get_session)) -> EmployeeOut:
+    return services.to_out(services.create_employee(session, data))
+
+
+@router.get("/{employee_id}", response_model=EmployeeOut)
+def get_employee(employee_id: int, session: Session = Depends(get_session)) -> EmployeeOut:
+    employee = repository.get_employee(session, employee_id)
+    if employee is None:
+        raise EmployeeNotFound(employee_id)
+    return services.to_out(employee)
+
+
+@router.put("/{employee_id}", response_model=EmployeeOut)
+def update_employee(
+    employee_id: int, data: EmployeeIn, session: Session = Depends(get_session)
+) -> EmployeeOut:
+    return services.to_out(services.update_employee(session, employee_id, data))
+
+
+@router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_employee(employee_id: int, session: Session = Depends(get_session)) -> Response:
+    services.delete_employee(session, employee_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
