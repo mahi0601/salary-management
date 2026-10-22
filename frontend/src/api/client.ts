@@ -6,6 +6,7 @@ import type {
   Filters,
   GroupBy,
   GroupStats,
+  ImportReport,
   Meta,
   SalaryChange,
   SalaryChangeInput,
@@ -90,6 +91,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : response.json()
 }
 
+async function saveFile(url: string, filename: string) {
+  const response = await fetch(url, { headers: authHeaders() })
+  if (!response.ok) throw await failure(response, false)
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(await response.blob())
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
+
 export function buildQuery(params: Record<string, string | number | undefined>): string {
   const query = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {
@@ -124,15 +135,21 @@ export const api = {
     ),
 
   // a plain <a href> can't carry the Authorization header, so fetch it and save the blob
-  async downloadCsv(filters: Filters, sortBy: SortField, order: 'asc' | 'desc') {
-    const url = `/api/employees/export.csv${buildQuery({ ...filters, sort_by: sortBy, order })}`
-    const response = await fetch(url, { headers: authHeaders() })
+  downloadCsv: (filters: Filters, sortBy: SortField, order: 'asc' | 'desc') =>
+    saveFile(`/api/employees/export.csv${buildQuery({ ...filters, sort_by: sortBy, order })}`, 'employees.csv'),
+
+  downloadImportTemplate: () => saveFile('/api/employees/import-template.csv', 'employee-import-template.csv'),
+
+  // the file goes up as the raw body, no multipart
+  async importFile(file: File, dryRun: boolean): Promise<ImportReport> {
+    const url = `/api/employees/import${buildQuery({ filename: file.name, dry_run: String(dryRun) })}`
+    const response = await fetch(url, {
+      method: 'POST',
+      body: file,
+      headers: authHeaders({ 'Content-Type': 'application/octet-stream' }),
+    })
     if (!response.ok) throw await failure(response, false)
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(await response.blob())
-    link.download = 'employees.csv'
-    link.click()
-    URL.revokeObjectURL(link.href)
+    return response.json()
   },
 
   createEmployee: (input: EmployeeInput) =>

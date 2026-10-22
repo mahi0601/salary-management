@@ -129,3 +129,41 @@ describe('downloadCsv', () => {
     await expect(api.downloadCsv({}, 'full_name', 'asc')).rejects.toThrow('boom')
   })
 })
+
+describe('import', () => {
+  it('sends the file as the raw body with the filename and mode in the query', async () => {
+    session.save('abc123')
+    const report = { dry_run: true, total_rows: 1, valid_rows: 1, created: 0, error_count: 0, errors: [] }
+    const spy = mockFetch(200, report)
+    const file = new File(['a,b'], 'march.csv')
+
+    await expect(api.importFile(file, true)).resolves.toEqual(report)
+
+    expect(spy.mock.calls[0][0]).toBe('/api/employees/import?filename=march.csv&dry_run=true')
+    const init = spy.mock.calls[0][1] as RequestInit
+    expect(init.body).toBe(file)
+    expect(init.headers).toMatchObject({
+      'Content-Type': 'application/octet-stream',
+      Authorization: 'Bearer abc123',
+    })
+  })
+
+  it('turns a bad file into an error with the server message', async () => {
+    mockFetch(422, { detail: 'Missing columns: salary' })
+
+    await expect(api.importFile(new File(['x'], 'a.csv'), false)).rejects.toThrow('Missing columns: salary')
+  })
+
+  it('downloads the template with the token', async () => {
+    session.save('abc123')
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('full_name,email', { status: 200 }))
+    URL.createObjectURL = vi.fn(() => 'blob:fake')
+    URL.revokeObjectURL = vi.fn()
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    await api.downloadImportTemplate()
+
+    expect(spy.mock.calls[0][0]).toBe('/api/employees/import-template.csv')
+    expect((spy.mock.calls[0][1] as RequestInit).headers).toMatchObject({ Authorization: 'Bearer abc123' })
+  })
+})

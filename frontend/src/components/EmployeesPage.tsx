@@ -4,6 +4,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import DownloadIcon from '@mui/icons-material/Download'
 import EditIcon from '@mui/icons-material/Edit'
 import HistoryIcon from '@mui/icons-material/History'
+import UploadIcon from '@mui/icons-material/Upload'
 import {
   Alert,
   Avatar,
@@ -39,6 +40,7 @@ import type { Employee, EmployeePage, Filters, Meta, SortField } from '../api/ty
 import { formatMoney, formatUsd } from '../lib/format'
 import { useDebounced } from '../lib/useDebounced'
 import EmployeeFormDialog from './EmployeeFormDialog'
+import ImportDialog from './ImportDialog'
 import SalaryHistoryDialog from './SalaryHistoryDialog'
 
 interface Props {
@@ -74,6 +76,7 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
   const [editing, setEditing] = useState<Employee | 'new' | null>(null)
   const [deleting, setDeleting] = useState<Employee | null>(null)
   const [historyOf, setHistoryOf] = useState<Employee | null>(null)
+  const [importing, setImporting] = useState(false)
   const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -174,6 +177,9 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
           </Button>
         )}
         <Box sx={{ flexGrow: 1 }} />
+        <Button startIcon={<UploadIcon />} onClick={() => setImporting(true)}>
+          Import
+        </Button>
         <Button
           startIcon={<DownloadIcon />}
           onClick={() =>
@@ -288,6 +294,16 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
           employee={editing === 'new' ? null : editing}
           onClose={() => setEditing(null)}
           onSaved={() => afterChange(editing === 'new' ? 'Employee added' : 'Changes saved')}
+        />
+      )}
+
+      {importing && (
+        <ImportDialog
+          onClose={() => setImporting(false)}
+          onImported={(count) => {
+            setImporting(false)
+            afterChange(`Imported ${count.toLocaleString()} employees`)
+          }}
         />
       )}
 

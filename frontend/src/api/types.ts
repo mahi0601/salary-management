@@ -38,6 +38,15 @@ export interface SalaryChangeInput {
   reason: string
 }
 
+export interface ImportReport {
+  dry_run: boolean
+  total_rows: number
+  valid_rows: number
+  created: number
+  error_count: number
+  errors: { row: number; field: string; message: string }[]
+}
+
 export interface EmployeePage {
   items: Employee[]
   total: number
