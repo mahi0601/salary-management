@@ -92,6 +92,21 @@ class SalaryChangeOut(BaseModel):
     changed_by: str
 
 
+class ImportRowError(BaseModel):
+    row: int
+    field: str
+    message: str
+
+
+class ImportReportOut(BaseModel):
+    dry_run: bool
+    total_rows: int
+    valid_rows: int
+    created: int
+    error_count: int
+    errors: list[ImportRowError]  # only the first few, see MAX_ERRORS_SHOWN
+
+
 class EmployeePage(BaseModel):
     items: list[EmployeeOut]
     total: int

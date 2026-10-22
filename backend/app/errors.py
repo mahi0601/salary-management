@@ -13,6 +13,10 @@ class EmployeeNotFound(DomainError):
         super().__init__(f"Employee {employee_id} not found")
 
 
+class ImportFileError(DomainError):
+    status_code = 422
+
+
 class InvalidSalaryChange(DomainError):
     status_code = 422
 

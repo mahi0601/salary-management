@@ -104,3 +104,11 @@ def salary_history(session: Session, employee_id: int) -> list[SalaryChange]:
         .order_by(SalaryChange.effective_date, SalaryChange.id)
     )
     return list(session.scalars(stmt))
+
+
+def existing_emails(session: Session, emails: list[str]) -> set[str]:
+    found: set[str] = set()
+    for start in range(0, len(emails), 500):  # stay well under sqlite's bound-variable limit
+        chunk = emails[start : start + 500]
+        found.update(session.scalars(select(Employee.email).where(Employee.email.in_(chunk))))
+    return found

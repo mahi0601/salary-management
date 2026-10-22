@@ -1,15 +1,23 @@
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app import csv_export, repository, services
+from app import csv_export, importer, repository, services
 from app.deps import current_user, employee_filters, get_session
 from app.errors import EmployeeNotFound
 from app.models import User
 from app.repository import EmployeeFilters
-from app.schemas import EmployeeIn, EmployeeOut, EmployeePage, SalaryChangeIn, SalaryChangeOut
+from app.schemas import (
+    EmployeeIn,
+    EmployeeOut,
+    EmployeePage,
+    ImportReportOut,
+    SalaryChangeIn,
+    SalaryChangeOut,
+)
 
 router = APIRouter(prefix="/api/employees", tags=["employees"])
 
@@ -48,6 +56,33 @@ def export_csv(
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="employees.csv"'},
     )
+
+
+@router.get("/import-template.csv")
+def import_template() -> Response:
+    return Response(
+        importer.TEMPLATE_CSV,
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="employee-import-template.csv"'},
+    )
+
+
+@router.post("/import", response_model=ImportReportOut)
+async def import_file(
+    request: Request,
+    filename: str = Query(min_length=1, max_length=200),
+    dry_run: bool = True,
+    session: Session = Depends(get_session),
+    user: User = Depends(current_user),
+) -> ImportReportOut:
+    # The file is the raw request body (no multipart), so no extra dependency is needed.
+    # Check the declared size before reading anything into memory.
+    declared = int(request.headers.get("content-length") or 0)
+    if declared > importer.MAX_BYTES:
+        raise HTTPException(status_code=413, detail="File is larger than 5 MB")
+    content = await request.body()
+    # parsing and saving block, so keep them off the event loop
+    return await run_in_threadpool(services.import_employees, session, filename, content, user.email, dry_run)
 
 
 @router.post("", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)

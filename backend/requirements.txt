@@ -3,3 +3,6 @@ uvicorn[standard]==0.54.0
 sqlalchemy==2.1.6
 pydantic[email]==2.14.1
 PyJWT==2.15.1
+openpyxl==3.1.5
+# openpyxl reads uploaded files; this makes it safe against malicious XML
+defusedxml==0.7.1

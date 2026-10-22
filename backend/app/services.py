@@ -4,13 +4,21 @@ from datetime import date
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import repository
+from app import importer, repository
 from app.countries import COUNTRIES, to_usd
 from app.errors import DuplicateEmail, EmployeeNotFound, InvalidSalaryChange, SalaryChangeConflict
 from app.models import AuditLog, Employee, SalaryChange
-from app.schemas import EmployeeIn, EmployeeOut, SalaryChangeIn, SalaryChangeOut
+from app.schemas import (
+    EmployeeIn,
+    EmployeeOut,
+    ImportReportOut,
+    ImportRowError,
+    SalaryChangeIn,
+    SalaryChangeOut,
+)
 
 START_REASON = "Starting salary"
+MAX_ERRORS_SHOWN = 100
 
 
 def to_out(employee: Employee) -> EmployeeOut:
@@ -79,6 +87,60 @@ def delete_employee(session: Session, employee_id: int, actor: str) -> None:
     _audit(session, actor, "delete", employee_id, {"email": employee.email, "salary": employee.salary})
     session.delete(employee)
     session.commit()
+
+
+def import_employees(
+    session: Session, filename: str, content: bytes, actor: str, dry_run: bool
+) -> ImportReportOut:
+    """All or nothing: one bad row and nothing is saved, so a half-imported sheet can't happen."""
+    parsed = importer.parse(filename, content)
+    taken = repository.existing_emails(session, [e.email for _, e in parsed.employees])
+    errors = parsed.errors + [
+        importer.RowError(row, "email", "An employee with this email already exists")
+        for row, e in parsed.employees
+        if e.email in taken
+    ]
+    errors.sort(key=lambda e: e.row)
+    valid = parsed.total_rows - len({e.row for e in errors})
+
+    created = 0
+    if not errors and not dry_run:
+        created = _create_many(session, [e for _, e in parsed.employees], actor, filename)
+
+    return ImportReportOut(
+        dry_run=dry_run,
+        total_rows=parsed.total_rows,
+        valid_rows=valid,
+        created=created,
+        error_count=len(errors),
+        errors=[ImportRowError(row=e.row, field=e.field, message=e.message) for e in errors[:MAX_ERRORS_SHOWN]],
+    )
+
+
+def _create_many(session: Session, rows: list[EmployeeIn], actor: str, filename: str) -> int:
+    employees = [Employee(**r.model_dump()) for r in rows]
+    session.add_all(employees)
+    try:
+        session.flush()
+    except IntegrityError as exc:  # someone added one of these emails while we were checking
+        session.rollback()
+        raise DuplicateEmail("one of the emails in the file") from exc
+    session.add_all(
+        SalaryChange(
+            employee_id=e.id,
+            salary=e.salary,
+            effective_date=e.hire_date,
+            reason=START_REASON,
+            changed_by=actor,
+        )
+        for e in employees
+    )
+    # one audit row for the whole file, not 20,000
+    session.add(
+        AuditLog(actor=actor, action="import", employee_id=None, details=json.dumps({"file": filename, "created": len(employees)}))
+    )
+    session.commit()
+    return len(employees)
 
 
 def salary_history(session: Session, employee_id: int) -> list[SalaryChangeOut]:
