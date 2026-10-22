@@ -80,7 +80,7 @@ cannot use an index; at 10k rows it is a trivial scan.
   file runs inside one request (about 5 s).
 
 ## Testing approach
-- **Backend (174 tests, 96% statement coverage, CI fails under 85%):** API tests through `TestClient` with an
+- **Backend (175 tests, 96% statement coverage, CI fails under 85%):** API tests through `TestClient` with an
   in-memory database, written as behaviour ("salary range filter compares in USD, not local currency", "a
   back-dated raise does not change today's salary", "one bad import row saves nothing"); pure-function tests for
   statistics, the importer and seed determinism; security tests for path traversal in static serving, CSV

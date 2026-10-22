@@ -269,7 +269,7 @@ Settings (environment variables): `SALARY_DB_URL` (default `sqlite:///./salary.d
 
 ## Tests
 ```bash
-make test        # backend (pytest, 174 tests, ~2 s) + frontend (vitest, 74 tests)
+make test        # backend (pytest, 175 tests, ~2 s) + frontend (vitest, 74 tests)
 make coverage    # the same with coverage reports
 ```
 Coverage: backend 96% of statements (CI fails under 85%), frontend 87% (CI fails under 80%). The tests use
