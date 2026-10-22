@@ -4,7 +4,7 @@ import { api } from './api/client'
 import type { Meta } from './api/types'
 import EmployeesPage from './components/EmployeesPage'
 
-// Charts pull in a large library; load it only when the Insights tab is opened.
+// recharts is big, so only fetch it when someone opens this tab
 const InsightsPage = lazy(() => import('./components/InsightsPage'))
 
 export default function App() {

@@ -59,7 +59,7 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
   const [editing, setEditing] = useState<Employee | 'new' | null>(null)
   const [deleting, setDeleting] = useState<Employee | null>(null)
 
-  // Typing in the search box shouldn't fire a request per keystroke.
+  // debounce the search box so we don't hit the API on every keystroke
   const debouncedFilters = { ...filters, search: useDebounced(filters.search) }
   const filterKey = JSON.stringify(debouncedFilters)
 

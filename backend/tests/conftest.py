@@ -7,7 +7,7 @@ from app.main import create_app
 
 @pytest.fixture
 def client():
-    """Fresh in-memory database per test: fast and fully isolated."""
+    # new in-memory DB every test
     return TestClient(create_app(create_db_engine("sqlite:///:memory:")))
 
 

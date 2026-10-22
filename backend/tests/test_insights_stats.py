@@ -38,7 +38,7 @@ class TestSummarize:
         assert (stats.headcount, stats.total_usd, stats.average_usd) == (5, 150, 30)
         assert (stats.min_usd, stats.p25_usd, stats.median_usd, stats.p75_usd, stats.max_usd) == (
             10, 20, 30, 40, 50,
-        )  # fmt: skip
+        )
 
     def test_average_is_rounded_to_whole_usd(self):
         assert summarize([1, 2]).average_usd == 2  # 1.5 rounds half to even -> 2

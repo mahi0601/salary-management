@@ -20,8 +20,7 @@ class Employee(Base):
     job_title: Mapped[str] = mapped_column(String(100))
     department: Mapped[str] = mapped_column(String(100))
     country: Mapped[str] = mapped_column(String(2))
-    # Annual base salary in whole units of the country's local currency.
-    # Integer on purpose: no floating-point drift for money.
+    # whole units of local currency, per year. int, never float - it's money
     salary: Mapped[int] = mapped_column(Integer)
     hire_date: Mapped[date] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
@@ -37,8 +36,8 @@ class Employee(Base):
     )
 
 
-# Salary normalised to USD inside SQL so sorting and range filters compare
-# like with like across countries (100,000 INR is not 100,000 USD).
+# salary in USD, worked out in SQL. Sorting/filtering on the raw number would
+# rank 3,000,000 INR above 100,000 GBP, which is nonsense.
 salary_usd_expr = Employee.salary * case(
     {code: c.usd_rate for code, c in COUNTRIES.items()}, value=Employee.country
 )

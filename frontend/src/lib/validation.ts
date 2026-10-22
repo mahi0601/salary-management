@@ -14,7 +14,7 @@ export type FormErrors = Partial<Record<keyof EmployeeFormValues, string>>
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/** Mirrors the server rules so HR gets instant feedback; the server remains the authority. */
+// Same rules as the API, just so the form complains before a round trip. The server still decides.
 export function validateEmployee(values: EmployeeFormValues, today = new Date()): FormErrors {
   const errors: FormErrors = {}
   if (!values.full_name.trim()) errors.full_name = 'Name is required'

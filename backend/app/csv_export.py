@@ -8,13 +8,13 @@ from app.models import Employee
 COLUMNS = [
     "id", "full_name", "email", "job_title", "department",
     "country", "currency", "salary", "salary_usd", "hire_date",
-]  # fmt: skip
+]
 
 _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 
 def neutralise_formula(value: object) -> object:
-    """Stop spreadsheet apps executing cell content as a formula (CSV injection)."""
+    # Excel runs cells starting with = + - @ as formulas. Prefix a quote so it stays text.
     if isinstance(value, str) and value.startswith(_FORMULA_PREFIXES):
         return "'" + value
     return value

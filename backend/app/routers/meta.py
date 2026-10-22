@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/meta", tags=["meta"])
 
 @router.get("")
 def options(session: Session = Depends(get_session)) -> dict:
-    """Values that populate filter dropdowns and form suggestions."""
+    # feeds the filter dropdowns and form suggestions
     return {
         "countries": [
             {"code": c.code, "name": c.name, "currency": c.currency, "usd_rate": c.usd_rate}

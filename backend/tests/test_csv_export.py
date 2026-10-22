@@ -18,7 +18,7 @@ def test_exports_header_and_rows_with_usd_column(client, make_employee):
     [row] = parse(response)
     assert (row["full_name"], row["currency"], row["salary"], row["salary_usd"]) == (
         "Grace Hopper", "USD", "150000", "150000",
-    )  # fmt: skip
+    )
 
 
 def test_export_honours_filters(client, make_employee):

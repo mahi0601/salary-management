@@ -1,4 +1,3 @@
-"""Employee use-cases: validation that needs the database, and persistence."""
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 

@@ -1,9 +1,8 @@
-"""Seed the database with synthetic employees.
+"""Fills the DB with fake employees.
 
     python -m app.seed [--count 10000] [--seed 42] [--reset]
 
-All data is synthetic (no real people). Generation is a pure function of the
-RNG seed, so the same seed always produces the same dataset.
+Same --seed gives the same data, so demos and tests are repeatable.
 """
 import argparse
 import random
@@ -16,7 +15,7 @@ from app.countries import COUNTRIES
 from app.database import Base, create_db_engine, create_session_factory, database_url
 from app.models import Employee
 
-# department -> {job title: typical US-market annual base salary in USD}
+# department -> {job title: rough US base salary, USD}
 JOB_CATALOG: dict[str, dict[str, int]] = {
     "Engineering": {
         "Software Engineer": 120_000,
@@ -61,18 +60,18 @@ JOB_CATALOG: dict[str, dict[str, int]] = {
     },
 }
 
-# Relative headcount per department (engineering-heavy, like many orgs).
+# headcount weights; engineering-heavy like most software shops
 DEPARTMENT_WEIGHTS = {
     "Engineering": 38, "Product": 8, "Sales": 16, "Marketing": 8,
     "Human Resources": 4, "Finance": 6, "Operations": 8, "Customer Support": 12,
-}  # fmt: skip
+}
 
-# country -> (headcount weight, pay level relative to the US market)
+# country -> (headcount weight, pay level vs the US)
 COUNTRY_PROFILE = {
     "US": (30, 1.00), "IN": (20, 0.30), "GB": (10, 0.75), "DE": (8, 0.80),
     "CA": (7, 0.85), "FR": (6, 0.72), "AU": (5, 0.85), "SG": (5, 0.80),
     "BR": (5, 0.35), "JP": (4, 0.65),
-}  # fmt: skip
+}
 
 FIRST_NAMES = [
     "Aarav", "Aisha", "Alex", "Amelia", "Ana", "Andre", "Anika", "Arjun", "Ben", "Camila",
@@ -80,14 +79,14 @@ FIRST_NAMES = [
     "Hana", "Hiro", "Isabella", "Ivan", "Jamal", "Jin", "Julia", "Kavya", "Kenji", "Lars",
     "Layla", "Liam", "Lucas", "Maya", "Mei", "Mohammed", "Nadia", "Noah", "Olivia", "Omar",
     "Priya", "Rahul", "Rosa", "Ryan", "Sakura", "Sofia", "Tariq", "Uma", "Victor", "Zoe",
-]  # fmt: skip
+]
 LAST_NAMES = [
     "Almeida", "Anderson", "Bose", "Brown", "Chatterjee", "Costa", "Davies", "Dubois", "Evans",
     "Fischer", "Garcia", "Gupta", "Hansen", "Hughes", "Iyer", "Jackson", "Johnson", "Kapoor",
     "Kim", "Kowalski", "Lee", "Lopez", "Martin", "Meyer", "Mukherjee", "Nair", "Nguyen",
     "Okafor", "Patel", "Perez", "Rao", "Reyes", "Rossi", "Sato", "Schmidt", "Sharma", "Silva",
     "Singh", "Smith", "Suzuki", "Tan", "Taylor", "Tanaka", "Wang", "Williams", "Wilson", "Yamamoto",
-]  # fmt: skip
+]
 
 HISTORY_YEARS = 12
 SALARY_NOISE_SIGMA = 0.12
@@ -96,7 +95,7 @@ MAX_TENURE_YEARS_FOR_RAISES = 10
 
 
 def _round_local(amount: float, usd_rate: float) -> int:
-    """Round to a figure that looks like a real salary in that currency."""
+    # nobody earns 4,363,217 INR exactly; round so the numbers look believable
     step = 100 if usd_rate >= 0.1 else 1_000
     return max(step, int(round(amount / step)) * step)
 
@@ -121,7 +120,7 @@ def generate_employees(count: int, rng: random.Random, today: date) -> Iterator[
         first, last = rng.choice(FIRST_NAMES), rng.choice(LAST_NAMES)
         yield {
             "full_name": f"{first} {last}",
-            # Sequence number guarantees uniqueness even when names collide.
+            # the running number keeps emails unique when two people share a name
             "email": f"{first}.{last}.{n}@acme.com".lower(),
             "job_title": job_title,
             "department": department,
@@ -133,7 +132,7 @@ def generate_employees(count: int, rng: random.Random, today: date) -> Iterator[
 
 def seed(session, count: int = 10_000, seed_value: int = 42, today: date | None = None) -> int:
     rows = list(generate_employees(count, random.Random(seed_value), today or date.today()))
-    session.execute(insert(Employee), rows)  # one bulk insert: ~10k rows in well under a second
+    session.execute(insert(Employee), rows)  # bulk insert, much faster than 10k session.add calls
     session.commit()
     return len(rows)
 

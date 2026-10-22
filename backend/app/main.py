@@ -34,7 +34,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
 
 def _mount_frontend(app: FastAPI) -> None:
-    """Serve the built React app from the same origin when present (single-container deploy)."""
+    # In the Docker image the React build sits next to the API; serve it from here.
     static_dir = Path(os.environ.get("SALARY_STATIC_DIR", "static"))
     index = static_dir / "index.html"
     if not index.is_file():

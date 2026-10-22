@@ -83,8 +83,7 @@ class GroupStatsOut(SalaryStatsOut):
 
 
 class SummaryOut(BaseModel):
-    """`stats` is null when no employee matches the filters."""
-
+    # None when the filters match nobody
     stats: SalaryStatsOut | None
 
 

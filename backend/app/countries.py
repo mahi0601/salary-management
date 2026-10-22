@@ -1,9 +1,6 @@
-"""Supported countries, their currencies and static USD conversion rates.
-
-Rates are deliberately static (see docs/01-requirements.md): insights are for
-comparing pay across countries, not for accounting, and a live FX feed would
-add an external dependency and non-deterministic numbers.
-"""
+# Rates are hard-coded on purpose. We only compare pay across countries here,
+# nobody is paying anyone off these numbers, and a live FX feed would make
+# the reports change under you. Rough 2025 values.
 from dataclasses import dataclass
 
 
@@ -12,7 +9,7 @@ class Country:
     code: str
     name: str
     currency: str
-    usd_rate: float  # 1 unit of local currency in USD
+    usd_rate: float  # USD per 1 unit of local currency
 
 
 COUNTRIES: dict[str, Country] = {
@@ -33,5 +30,4 @@ COUNTRIES: dict[str, Country] = {
 
 
 def to_usd(amount: int, country_code: str) -> int:
-    """Convert an annual salary in local currency to whole USD."""
     return round(amount * COUNTRIES[country_code].usd_rate)

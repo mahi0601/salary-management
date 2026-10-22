@@ -20,7 +20,7 @@ export class ApiError extends Error {
   }
 }
 
-/** FastAPI returns `detail` as a string (domain errors) or a list (validation errors). */
+// `detail` is a string for our own errors but a list for pydantic's 422s
 function describeDetail(detail: unknown): string {
   if (typeof detail === 'string') return detail
   if (Array.isArray(detail)) {

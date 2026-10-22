@@ -18,7 +18,7 @@ def database_url() -> str:
 def create_db_engine(url: str) -> Engine:
     kwargs: dict = {"connect_args": {"check_same_thread": False}}
     if ":memory:" in url:
-        # One shared connection so every session sees the same in-memory DB.
+        # in-memory sqlite is per-connection, so share one or tests see an empty DB
         kwargs["poolclass"] = StaticPool
     engine = create_engine(url, **kwargs)
 

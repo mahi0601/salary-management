@@ -8,7 +8,7 @@ export function formatMoney(amount: number, currency: string): string {
 
 export const formatUsd = (amount: number) => formatMoney(amount, 'USD')
 
-/** Compact form for chart axes: 125000 -> "$125K", 940000000 -> "$940M". */
+// axis labels: 125000 -> $125K
 export function formatUsdCompact(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

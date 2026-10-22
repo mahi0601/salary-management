@@ -1,4 +1,3 @@
-"""Data access for employees. All SQL lives here; routers stay thin."""
 from dataclasses import dataclass
 from typing import Iterator
 
@@ -49,7 +48,7 @@ def apply_filters(stmt: Select, f: EmployeeFilters) -> Select:
 def _ordered(stmt: Select, sort_by: str, descending: bool) -> Select:
     column = SORT_COLUMNS[sort_by]
     order = column.desc() if descending else column.asc()
-    # id as tie-breaker keeps pagination stable when many rows share a value.
+    # tie-break on id, otherwise rows can repeat or vanish between pages
     return stmt.order_by(order, Employee.id)
 
 
@@ -91,7 +90,7 @@ def distinct_values(session: Session, column) -> list[str]:
 
 
 def salary_rows(session: Session, filters: EmployeeFilters) -> list[tuple[str, str, str, int]]:
-    """(country, department, job_title, salary) for matching employees. Narrow select: no ORM objects."""
+    # plain tuples, not ORM objects - 10k of those is noticeably slower
     stmt = apply_filters(
         select(Employee.country, Employee.department, Employee.job_title, Employee.salary), filters
     )

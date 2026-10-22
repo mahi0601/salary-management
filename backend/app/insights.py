@@ -1,4 +1,3 @@
-"""Pay statistics. Pure functions over lists of USD salaries: no I/O, easy to test."""
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterable
@@ -24,7 +23,7 @@ class Band:
 
 
 def percentile(sorted_values: list[int], pct: float) -> float:
-    """Percentile with linear interpolation between closest ranks (as numpy's default)."""
+    # linear interpolation, same as numpy's default
     if not sorted_values:
         raise ValueError("percentile of empty data")
     rank = (len(sorted_values) - 1) * pct / 100
@@ -51,15 +50,13 @@ def summarize(values: Iterable[int]) -> SalaryStats | None:
 
 
 def summarize_by(pairs: Iterable[tuple[str, int]]) -> dict[str, SalaryStats]:
-    """Group (key, usd_salary) pairs and summarise each group."""
     groups: dict[str, list[int]] = defaultdict(list)
     for key, usd in pairs:
         groups[key].append(usd)
-    return {key: summarize(values) for key, values in groups.items()}  # type: ignore[misc]
+    return {key: summarize(values) for key, values in groups.items()}
 
 
 def distribution(values: Iterable[int], bucket_size: int) -> list[Band]:
-    """Histogram with fixed-width bands starting at 0, ending at the band holding the max."""
     if bucket_size <= 0:
         raise ValueError("bucket_size must be positive")
     counts: dict[int, int] = defaultdict(int)

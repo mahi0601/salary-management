@@ -37,7 +37,6 @@ def breakdown(
     filters: EmployeeFilters = Depends(employee_filters),
     session: Session = Depends(get_session),
 ) -> list[GroupStatsOut]:
-    """Pay statistics (USD) per country, department or job title, largest group first."""
     index = _KEY_INDEX[group_by]
     grouped = insights.summarize_by((row[index], row[3]) for row in _usd_rows(session, filters))
     ordered = sorted(grouped.items(), key=lambda kv: (-kv[1].headcount, kv[0]))

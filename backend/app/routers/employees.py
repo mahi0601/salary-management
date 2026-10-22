@@ -40,7 +40,7 @@ def export_csv(
     order: SortOrder = "asc",
     session: Session = Depends(get_session),
 ) -> StreamingResponse:
-    """The current filtered view as CSV, streamed so memory stays flat at any size."""
+    # streamed row by row so a big export doesn't sit in memory
     rows = repository.iter_employees(session, filters, sort_by=sort_by, descending=order == "desc")
     return StreamingResponse(
         csv_export.rows_as_csv(rows),
