@@ -65,3 +65,30 @@ class EmployeePage(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class SalaryStatsOut(BaseModel):
+    headcount: int
+    total_usd: int
+    average_usd: int
+    min_usd: int
+    p25_usd: int
+    median_usd: int
+    p75_usd: int
+    max_usd: int
+
+
+class GroupStatsOut(SalaryStatsOut):
+    key: str
+
+
+class SummaryOut(BaseModel):
+    """`stats` is null when no employee matches the filters."""
+
+    stats: SalaryStatsOut | None
+
+
+class BandOut(BaseModel):
+    from_usd: int
+    to_usd: int
+    count: int

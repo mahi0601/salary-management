@@ -8,7 +8,7 @@ from sqlalchemy import Engine
 
 from app.database import Base, create_db_engine, create_session_factory, database_url
 from app.errors import DomainError
-from app.routers import employees, meta
+from app.routers import employees, insights, meta
 
 
 def create_app(engine: Engine | None = None) -> FastAPI:
@@ -28,6 +28,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
     app.include_router(employees.router)
     app.include_router(meta.router)
+    app.include_router(insights.router)
     _mount_frontend(app)
     return app
 

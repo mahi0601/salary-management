@@ -88,3 +88,11 @@ def email_exists(session: Session, email: str, *, excluding_id: int | None = Non
 
 def distinct_values(session: Session, column) -> list[str]:
     return list(session.scalars(select(column).distinct().order_by(column)))
+
+
+def salary_rows(session: Session, filters: EmployeeFilters) -> list[tuple[str, str, str, int]]:
+    """(country, department, job_title, salary) for matching employees. Narrow select: no ORM objects."""
+    stmt = apply_filters(
+        select(Employee.country, Employee.department, Employee.job_title, Employee.salary), filters
+    )
+    return [tuple(row) for row in session.execute(stmt)]
