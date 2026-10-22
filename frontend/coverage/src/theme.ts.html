@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">85.71% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>6/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">80% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>8/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -91,8 +91,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -103,20 +103,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { createTheme } from '@mui/material'
 &nbsp;
 export type Mode = 'light' | 'dark'
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >makeTheme = (m</span>ode: Mode) =&gt;</span>
-<span class="cstat-no" title="statement not covered" >  createTheme({</span>
+export const makeTheme = (mode: Mode) =&gt;
+  createTheme({
     palette: {
       mode,
       primary: { main: mode === 'dark' ? '#6cb4e4' : '#1f5f8b' },
@@ -126,14 +126,14 @@ export const <span class="cstat-no" title="statement not covered" ><span class="
     shape: { borderRadius: 8 },
   })
 &nbsp;
-export function <span class="fstat-no" title="function not covered" >initialMode(): Mode {</span>
-<span class="cstat-no" title="statement not covered" >  try {</span>
-    const saved = <span class="cstat-no" title="statement not covered" >localStorage.getItem('mode')</span>
-<span class="cstat-no" title="statement not covered" >    if (saved === 'light' || saved === 'dark') <span class="cstat-no" title="statement not covered" >return saved</span></span>
+export function initialMode(): Mode {
+  try {
+    const saved = localStorage.getItem('mode')
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (saved === 'light' || saved === 'dark') <span class="cstat-no" title="statement not covered" >return saved</span>
   } catch {
     // storage blocked, fall through
   }
-<span class="cstat-no" title="statement not covered" >  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'</span>
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? <span class="branch-0 cbranch-no" title="branch not covered" >'dark' : '</span>light'
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -142,7 +142,7 @@ export function <span class="fstat-no" title="function not covered" >initialMode
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-22T18:31:30.506Z
+                at 2026-10-22T18:42:14.593Z
             </div>
         <script src="../prettify.js"></script>
         <script>

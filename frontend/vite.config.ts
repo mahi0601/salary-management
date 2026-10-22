@@ -13,6 +13,8 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/**'],
       exclude: ['src/test/**', 'src/**/*.test.*', 'src/main.tsx'],
+      // a floor just under today's numbers (86 / 88 / 76); CI fails if tests get thinner
+      thresholds: { statements: 80, lines: 80, functions: 70, branches: 80 },
     },
   },
 })
