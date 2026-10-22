@@ -13,7 +13,7 @@ from sqlalchemy import delete, func, insert, select
 
 from app.countries import COUNTRIES
 from app.database import Base, create_db_engine, create_session_factory, database_url
-from app.models import Employee
+from app.models import Employee, SalaryChange
 
 # department -> {job title: rough US base salary, USD}
 JOB_CATALOG: dict[str, dict[str, int]] = {
@@ -119,6 +119,7 @@ def generate_employees(count: int, rng: random.Random, today: date) -> Iterator[
 
         first, last = rng.choice(FIRST_NAMES), rng.choice(LAST_NAMES)
         yield {
+            "id": n,  # explicit, so the history rows can point at it
             "full_name": f"{first} {last}",
             # the running number keeps emails unique when two people share a name
             "email": f"{first}.{last}.{n}@acme.com".lower(),
@@ -130,9 +131,51 @@ def generate_employees(count: int, rng: random.Random, today: date) -> Iterator[
         }
 
 
+RAISE_REASONS = ["Annual review", "Annual review", "Promotion", "Market adjustment"]
+RAISE_RANGE = (0.03, 0.12)
+FIRST_RAISE_AFTER_DAYS = 180
+MAX_RAISES = 3
+
+
+def generate_history(employees: list[dict], rng: random.Random, today: date) -> Iterator[dict]:
+    """A starting salary plus 0-3 raises per employee, worked backwards from the salary they
+    have now, so the last row always matches employees.salary."""
+    for emp in employees:
+        hired = emp["hire_date"]
+        window = (today - timedelta(days=30) - (hired + timedelta(days=FIRST_RAISE_AFTER_DAYS))).days
+        years = (today - hired).days // 365
+        raises = rng.randint(0, min(MAX_RAISES, years)) if window > 0 else 0
+        offsets = sorted(rng.sample(range(window), raises)) if raises else []
+        dates = [hired + timedelta(days=FIRST_RAISE_AFTER_DAYS + d) for d in offsets]
+
+        usd_rate = COUNTRIES[emp["country"]].usd_rate
+        salaries = [emp["salary"]]
+        for _ in dates:
+            earlier = _round_local(salaries[0] / (1 + rng.uniform(*RAISE_RANGE)), usd_rate)
+            salaries.insert(0, min(earlier, salaries[0] - 1))  # rounding must never flatten a raise
+
+        yield _history_row(emp["id"], hired, salaries[0], "Starting salary")
+        for day, salary in zip(dates, salaries[1:]):
+            yield _history_row(emp["id"], day, salary, rng.choice(RAISE_REASONS))
+
+
+def _history_row(employee_id: int, day: date, salary: int, reason: str) -> dict:
+    return {
+        "employee_id": employee_id,
+        "effective_date": day,
+        "salary": salary,
+        "reason": reason,
+        "changed_by": "seed",
+    }
+
+
 def seed(session, count: int = 10_000, seed_value: int = 42, today: date | None = None) -> int:
-    rows = list(generate_employees(count, random.Random(seed_value), today or date.today()))
+    today = today or date.today()
+    rows = list(generate_employees(count, random.Random(seed_value), today))
+    # own random stream: history can change without moving any employee's name or salary
+    history = list(generate_history(rows, random.Random(f"history-{seed_value}"), today))
     session.execute(insert(Employee), rows)  # bulk insert, much faster than 10k session.add calls
+    session.execute(insert(SalaryChange), history)
     session.commit()
     return len(rows)
 
@@ -155,7 +198,7 @@ def main() -> None:
             print(f"Database already has {existing} employees; skipping seed.")
             return
         if args.reset:
-            session.execute(delete(Employee))
+            session.execute(delete(Employee))  # history goes with it (foreign key cascade)
             session.commit()
         elif existing:
             raise SystemExit(f"{existing} employees already exist; pass --reset to replace them.")

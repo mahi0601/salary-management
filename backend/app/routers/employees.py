@@ -9,7 +9,7 @@ from app.deps import current_user, employee_filters, get_session
 from app.errors import EmployeeNotFound
 from app.models import User
 from app.repository import EmployeeFilters
-from app.schemas import EmployeeIn, EmployeeOut, EmployeePage
+from app.schemas import EmployeeIn, EmployeeOut, EmployeePage, SalaryChangeIn, SalaryChangeOut
 
 router = APIRouter(prefix="/api/employees", tags=["employees"])
 
@@ -81,3 +81,20 @@ def delete_employee(
 ) -> Response:
     services.delete_employee(session, employee_id, user.email)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{employee_id}/salary-history", response_model=list[SalaryChangeOut])
+def salary_history(employee_id: int, session: Session = Depends(get_session)) -> list[SalaryChangeOut]:
+    return services.salary_history(session, employee_id)
+
+
+@router.post(
+    "/{employee_id}/salary-changes", response_model=list[SalaryChangeOut], status_code=status.HTTP_201_CREATED
+)
+def add_salary_change(
+    employee_id: int,
+    data: SalaryChangeIn,
+    session: Session = Depends(get_session),
+    user: User = Depends(current_user),
+) -> list[SalaryChangeOut]:
+    return services.add_salary_change(session, employee_id, data, user.email)

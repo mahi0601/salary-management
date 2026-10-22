@@ -4,7 +4,7 @@ from typing import Iterator
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
-from app.models import Employee, salary_usd_expr
+from app.models import Employee, SalaryChange, salary_usd_expr
 
 SORT_COLUMNS = {
     "full_name": Employee.full_name,
@@ -95,3 +95,12 @@ def salary_rows(session: Session, filters: EmployeeFilters) -> list[tuple[str, s
         select(Employee.country, Employee.department, Employee.job_title, Employee.salary), filters
     )
     return [tuple(row) for row in session.execute(stmt)]
+
+
+def salary_history(session: Session, employee_id: int) -> list[SalaryChange]:
+    stmt = (
+        select(SalaryChange)
+        .where(SalaryChange.employee_id == employee_id)
+        .order_by(SalaryChange.effective_date, SalaryChange.id)
+    )
+    return list(session.scalars(stmt))

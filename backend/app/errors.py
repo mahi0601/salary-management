@@ -13,6 +13,14 @@ class EmployeeNotFound(DomainError):
         super().__init__(f"Employee {employee_id} not found")
 
 
+class InvalidSalaryChange(DomainError):
+    status_code = 422
+
+
+class SalaryChangeConflict(DomainError):
+    status_code = 409
+
+
 class InvalidCredentials(DomainError):
     status_code = 401
 

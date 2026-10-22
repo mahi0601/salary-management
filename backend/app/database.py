@@ -27,6 +27,7 @@ def create_db_engine(url: str) -> Engine:
         cur = dbapi_conn.cursor()
         cur.execute("PRAGMA journal_mode=WAL")
         cur.execute("PRAGMA synchronous=NORMAL")
+        cur.execute("PRAGMA foreign_keys=ON")  # sqlite ignores foreign keys unless asked
         cur.close()
 
     return engine

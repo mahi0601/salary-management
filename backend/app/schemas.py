@@ -60,6 +60,38 @@ class EmployeeOut(BaseModel):
     hire_date: date
 
 
+class SalaryChangeIn(BaseModel):
+    salary: int = Field(gt=0, le=MAX_SALARY, description="New annual base salary, local currency")
+    effective_date: date
+    reason: str = Field(min_length=1, max_length=200)
+
+    @field_validator("reason")
+    @classmethod
+    def _strip_reason(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("effective_date")
+    @classmethod
+    def _not_in_future(cls, value: date) -> date:
+        if value > date.today():
+            raise ValueError("effective_date cannot be in the future")
+        return value
+
+
+class SalaryChangeOut(BaseModel):
+    id: int
+    effective_date: date
+    salary: int
+    currency: str
+    salary_usd: int
+    change_pct: float | None  # None on the first row
+    reason: str
+    changed_by: str
+
+
 class EmployeePage(BaseModel):
     items: list[EmployeeOut]
     total: int

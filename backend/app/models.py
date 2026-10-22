@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Date, DateTime, Index, Integer, String, Text, case
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, case
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.countries import COUNTRIES
 from app.database import Base
@@ -28,6 +28,11 @@ class Employee(Base):
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
     )
 
+    # the database deletes the history with the employee (see the foreign key below)
+    salary_changes: Mapped[list["SalaryChange"]] = relationship(
+        cascade="all, delete-orphan", passive_deletes=True
+    )
+
     __table_args__ = (
         Index("ix_employees_country", "country"),
         Index("ix_employees_department", "department"),
@@ -41,6 +46,26 @@ class Employee(Base):
 salary_usd_expr = Employee.salary * case(
     {code: c.usd_rate for code, c in COUNTRIES.items()}, value=Employee.country
 )
+
+
+class SalaryChange(Base):
+    """One row per change of pay. employees.salary is just the latest of these, kept
+    on the employee so listing, sorting and the insights don't have to join."""
+
+    __tablename__ = "salary_changes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"))
+    salary: Mapped[int] = mapped_column(Integer)
+    effective_date: Mapped[date] = mapped_column(Date)
+    reason: Mapped[str] = mapped_column(String(200))
+    changed_by: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("employee_id", "effective_date", name="uq_salary_change_day"),
+        Index("ix_salary_changes_employee", "employee_id"),
+    )
 
 
 class User(Base):
