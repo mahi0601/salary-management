@@ -1,10 +1,13 @@
 import AddIcon from '@mui/icons-material/Add'
+import ClearIcon from '@mui/icons-material/Clear'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DownloadIcon from '@mui/icons-material/Download'
 import EditIcon from '@mui/icons-material/Edit'
 import {
   Alert,
+  Avatar,
   Box,
+  Chip,
   Button,
   Dialog,
   DialogActions,
@@ -12,8 +15,10 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  LinearProgress,
   MenuItem,
   Paper,
+  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -48,6 +53,14 @@ const COLUMNS: { field: SortField; label: string; align?: 'right' }[] = [
   { field: 'hire_date', label: 'Hired' },
 ]
 
+const initials = (name: string) =>
+  name
+    .split(' ')
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+
 export default function EmployeesPage({ meta, onDataChanged }: Props) {
   const [filters, setFilters] = useState<Filters>({})
   const [sortBy, setSortBy] = useState<SortField>('full_name')
@@ -58,10 +71,15 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Employee | 'new' | null>(null)
   const [deleting, setDeleting] = useState<Employee | null>(null)
+  const [loadedKey, setLoadedKey] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   // debounce the search box so we don't hit the API on every keystroke
   const debouncedFilters = { ...filters, search: useDebounced(filters.search) }
   const filterKey = JSON.stringify(debouncedFilters)
+
+  const queryKey = JSON.stringify([filterKey, sortBy, order, page, pageSize])
+  const loading = loadedKey !== queryKey
 
   const load = useCallback(() => {
     api
@@ -71,7 +89,8 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
         setError(null)
       })
       .catch((e: Error) => setError(e.message))
-  }, [filterKey, sortBy, order, page, pageSize])
+      .finally(() => setLoadedKey(queryKey))
+  }, [filterKey, sortBy, order, page, pageSize, queryKey])
 
   useEffect(load, [load])
 
@@ -86,12 +105,18 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
     setPage(0)
   }
 
-  const afterChange = () => {
+  const afterChange = (message: string) => {
     setEditing(null)
     setDeleting(null)
+    setNotice(message)
     load()
     onDataChanged()
   }
+
+  const countryNames = Object.fromEntries(meta.countries.map((c) => [c.code, c.name]))
+  const hasFilters = Object.values(filters).some(Boolean)
+  const from = data && data.total > 0 ? page * pageSize + 1 : 0
+  const to = data ? Math.min((page + 1) * pageSize, data.total) : 0
 
   const select = (key: 'country' | 'department' | 'job_title', label: string, options: [string, string][]) => (
     <TextField
@@ -140,6 +165,11 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
           onChange={(e) => setFilter('max_salary_usd', e.target.value)}
           sx={{ width: 150 }}
         />
+        {hasFilters && (
+          <Button startIcon={<ClearIcon />} onClick={() => { setFilters({}); setPage(0) }}>
+            Clear filters
+          </Button>
+        )}
         <Box sx={{ flexGrow: 1 }} />
         <Button
           startIcon={<DownloadIcon />}
@@ -155,9 +185,14 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
 
       {error && <Alert severity="error">{error}</Alert>}
 
+      <Typography variant="body2" color="text.secondary" aria-live="polite">
+        {data ? `Showing ${from.toLocaleString()}–${to.toLocaleString()} of ${data.total.toLocaleString()} employees` : ' '}
+      </Typography>
+
       <Paper variant="outlined">
-        <TableContainer>
-          <Table size="small" aria-label="Employees">
+        {loading && <LinearProgress />}
+        <TableContainer sx={{ maxHeight: '65vh' }}>
+          <Table stickyHeader size="small" aria-label="Employees">
             <TableHead>
               <TableRow>
                 {COLUMNS.map((c) => (
@@ -180,14 +215,23 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
               {data?.items.map((e) => (
                 <TableRow key={e.id} hover>
                   <TableCell>
-                    <Typography variant="body2">{e.full_name}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {e.email}
-                    </Typography>
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                      <Avatar sx={{ width: 32, height: 32, fontSize: 13 }}>{initials(e.full_name)}</Avatar>
+                      <Box>
+                        <Typography variant="body2">{e.full_name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {e.email}
+                        </Typography>
+                      </Box>
+                    </Stack>
                   </TableCell>
                   <TableCell>{e.job_title}</TableCell>
                   <TableCell>{e.department}</TableCell>
-                  <TableCell>{e.country}</TableCell>
+                  <TableCell>
+                    <Tooltip title={countryNames[e.country] ?? e.country}>
+                      <Chip size="small" label={e.country} variant="outlined" />
+                    </Tooltip>
+                  </TableCell>
                   <TableCell align="right">
                     <Typography variant="body2">{formatMoney(e.salary, e.currency)}</Typography>
                     {e.currency !== 'USD' && (
@@ -236,9 +280,16 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
           meta={meta}
           employee={editing === 'new' ? null : editing}
           onClose={() => setEditing(null)}
-          onSaved={afterChange}
+          onSaved={() => afterChange(editing === 'new' ? 'Employee added' : 'Changes saved')}
         />
       )}
+
+      <Snackbar
+        open={!!notice}
+        autoHideDuration={3000}
+        onClose={() => setNotice(null)}
+        message={notice}
+      />
 
       <Dialog open={!!deleting} onClose={() => setDeleting(null)}>
         <DialogTitle>Delete employee?</DialogTitle>
@@ -255,7 +306,7 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
               deleting &&
               api
                 .deleteEmployee(deleting.id)
-                .then(afterChange)
+                .then(() => afterChange('Employee deleted'))
                 .catch((e: Error) => {
                   setError(e.message)
                   setDeleting(null)

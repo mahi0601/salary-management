@@ -1,3 +1,8 @@
 body {
   margin: 0;
 }
+
+/* recharts hard-codes a grey fill, which is hard to read on the dark theme */
+.recharts-cartesian-axis-tick-value {
+  fill: currentColor;
+}

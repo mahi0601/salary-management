@@ -1,3 +1,7 @@
+import GroupsIcon from '@mui/icons-material/Groups'
+import PaidIcon from '@mui/icons-material/Paid'
+import ShowChartIcon from '@mui/icons-material/ShowChart'
+import SortIcon from '@mui/icons-material/Sort'
 import {
   Alert,
   Card,
@@ -74,12 +78,17 @@ export default function InsightsPage({ meta }: { meta: Meta }) {
   const countryNames = Object.fromEntries(meta.countries.map((c) => [c.code, c.name]))
   const rows = groups.map((g) => ({ ...g, label: groupBy === 'country' ? (countryNames[g.key] ?? g.key) : g.key }))
 
-  const kpis: [string, string][] = stats
+  const kpis = stats
     ? [
-        ['Headcount', stats.headcount.toLocaleString()],
-        ['Total annual payroll', formatUsd(stats.total_usd)],
-        ['Average salary', formatUsd(stats.average_usd)],
-        ['Median salary', formatUsd(stats.median_usd)],
+        { label: 'Headcount', value: stats.headcount.toLocaleString(), icon: <GroupsIcon /> },
+        { label: 'Total annual payroll', value: formatUsd(stats.total_usd), icon: <PaidIcon /> },
+        { label: 'Average salary', value: formatUsd(stats.average_usd), icon: <ShowChartIcon /> },
+        {
+          label: 'Median salary',
+          value: formatUsd(stats.median_usd),
+          icon: <SortIcon />,
+          hint: `Middle 50%: ${formatUsd(stats.p25_usd)} – ${formatUsd(stats.p75_usd)}`,
+        },
       ]
     : []
 
@@ -97,15 +106,21 @@ export default function InsightsPage({ meta }: { meta: Meta }) {
       {stats === null && <Alert severity="info">No employees match this scope.</Alert>}
 
       <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: 'wrap' }}>
-        {kpis.map(([label, value]) => (
-          <Card key={label} variant="outlined" sx={{ flex: '1 1 200px' }}>
+        {kpis.map((k) => (
+          <Card key={k.label} variant="outlined" sx={{ flex: '1 1 200px', borderTop: 3, borderTopColor: 'primary.main' }}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                {label}
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'text.secondary' }}>
+                {k.icon}
+                <Typography variant="body2">{k.label}</Typography>
+              </Stack>
+              <Typography variant="h5" component="p" sx={{ mt: 0.5 }}>
+                {k.value}
               </Typography>
-              <Typography variant="h5" component="p">
-                {value}
-              </Typography>
+              {k.hint && (
+                <Typography variant="caption" color="text.secondary">
+                  {k.hint}
+                </Typography>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -131,7 +146,7 @@ export default function InsightsPage({ meta }: { meta: Meta }) {
           </ToggleButtonGroup>
         </Stack>
 
-        <div role="img" aria-label={`Median salary in USD by ${groupBy}`}>
+        <div style={{ color: theme.palette.text.secondary }} role="img" aria-label={`Median salary in USD by ${groupBy}`}>
           <ResponsiveContainer width="100%" height={Math.max(220, groups.length * 30)}>
             <BarChart data={rows} layout="vertical" margin={{ left: 24, right: 24 }}>
               <CartesianGrid horizontal={false} strokeDasharray="3 3" />
@@ -174,7 +189,7 @@ export default function InsightsPage({ meta }: { meta: Meta }) {
         <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
           Salary distribution (USD, $25K bands)
         </Typography>
-        <div role="img" aria-label="Number of employees per salary band">
+        <div style={{ color: theme.palette.text.secondary }} role="img" aria-label="Number of employees per salary band">
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={bands.map((b) => ({ ...b, label: `${formatUsdCompact(b.from_usd)}` }))}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
