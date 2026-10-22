@@ -7,6 +7,8 @@ import type {
   GroupBy,
   GroupStats,
   Meta,
+  SalaryChange,
+  SalaryChangeInput,
   SalaryStats,
   SortField,
 } from './types'
@@ -138,6 +140,14 @@ export const api = {
 
   updateEmployee: (id: number, input: EmployeeInput) =>
     request<Employee>(`/api/employees/${id}`, { method: 'PUT', body: JSON.stringify(input) }),
+
+  salaryHistory: (id: number) => request<SalaryChange[]>(`/api/employees/${id}/salary-history`),
+
+  addSalaryChange: (id: number, input: SalaryChangeInput) =>
+    request<SalaryChange[]>(`/api/employees/${id}/salary-changes`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
 
   deleteEmployee: (id: number) => request<void>(`/api/employees/${id}`, { method: 'DELETE' }),
 

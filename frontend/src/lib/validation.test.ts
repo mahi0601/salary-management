@@ -1,4 +1,4 @@
-import { type EmployeeFormValues, toInput, validateEmployee } from './validation'
+import { type EmployeeFormValues, type RaiseFormValues, toInput, validateEmployee, validateRaise } from './validation'
 
 const TODAY = new Date('2026-06-15')
 
@@ -45,5 +45,30 @@ describe('toInput', () => {
       full_name: 'Asha Rao',
       salary: 2400000,
     })
+  })
+})
+
+describe('validateRaise', () => {
+  const raise: RaiseFormValues = { salary: '110000', effective_date: '2025-01-01', reason: 'Promotion' }
+
+  it('accepts a complete change', () => {
+    expect(validateRaise(raise, '2022-03-14', TODAY)).toEqual({})
+  })
+
+  it.each(['', '0', '-1', '1.5', 'abc'])('rejects salary %j', (salary) => {
+    expect(validateRaise({ ...raise, salary }, '2022-03-14', TODAY).salary).toBeDefined()
+  })
+
+  it('rejects a date before the hire date but allows the hire date itself', () => {
+    expect(validateRaise({ ...raise, effective_date: '2022-03-13' }, '2022-03-14', TODAY).effective_date).toBeDefined()
+    expect(validateRaise({ ...raise, effective_date: '2022-03-14' }, '2022-03-14', TODAY).effective_date).toBeUndefined()
+  })
+
+  it('rejects a future date', () => {
+    expect(validateRaise({ ...raise, effective_date: '2026-06-16' }, '2022-03-14', TODAY).effective_date).toBeDefined()
+  })
+
+  it('requires a reason', () => {
+    expect(validateRaise({ ...raise, reason: '  ' }, '2022-03-14', TODAY).reason).toBeDefined()
   })
 })

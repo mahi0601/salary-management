@@ -46,3 +46,27 @@ export function toInput(values: EmployeeFormValues): EmployeeInput {
     hire_date: values.hire_date,
   }
 }
+
+export interface RaiseFormValues {
+  salary: string
+  effective_date: string
+  reason: string
+}
+
+export type RaiseErrors = Partial<Record<keyof RaiseFormValues, string>>
+
+export function validateRaise(values: RaiseFormValues, hireDate: string, today = new Date()): RaiseErrors {
+  const errors: RaiseErrors = {}
+  if (!/^\d+$/.test(values.salary) || Number(values.salary) <= 0) {
+    errors.salary = 'Enter a whole number greater than 0'
+  }
+  if (!values.effective_date) {
+    errors.effective_date = 'Effective date is required'
+  } else if (values.effective_date > today.toISOString().slice(0, 10)) {
+    errors.effective_date = 'Effective date cannot be in the future'
+  } else if (values.effective_date < hireDate) {
+    errors.effective_date = `Effective date is before the hire date (${hireDate})`
+  }
+  if (!values.reason.trim()) errors.reason = 'Give a reason'
+  return errors
+}

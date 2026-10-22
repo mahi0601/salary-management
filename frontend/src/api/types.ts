@@ -21,6 +21,23 @@ export interface EmployeeInput {
   hire_date: string
 }
 
+export interface SalaryChange {
+  id: number
+  effective_date: string
+  salary: number
+  currency: string
+  salary_usd: number
+  change_pct: number | null
+  reason: string
+  changed_by: string
+}
+
+export interface SalaryChangeInput {
+  salary: number
+  effective_date: string
+  reason: string
+}
+
 export interface EmployeePage {
   items: Employee[]
   total: number

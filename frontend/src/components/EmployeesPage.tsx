@@ -3,6 +3,7 @@ import ClearIcon from '@mui/icons-material/Clear'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DownloadIcon from '@mui/icons-material/Download'
 import EditIcon from '@mui/icons-material/Edit'
+import HistoryIcon from '@mui/icons-material/History'
 import {
   Alert,
   Avatar,
@@ -38,6 +39,7 @@ import type { Employee, EmployeePage, Filters, Meta, SortField } from '../api/ty
 import { formatMoney, formatUsd } from '../lib/format'
 import { useDebounced } from '../lib/useDebounced'
 import EmployeeFormDialog from './EmployeeFormDialog'
+import SalaryHistoryDialog from './SalaryHistoryDialog'
 
 interface Props {
   meta: Meta
@@ -71,6 +73,7 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Employee | 'new' | null>(null)
   const [deleting, setDeleting] = useState<Employee | null>(null)
+  const [historyOf, setHistoryOf] = useState<Employee | null>(null)
   const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -243,6 +246,9 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
                   </TableCell>
                   <TableCell>{e.hire_date}</TableCell>
                   <TableCell align="right">
+                    <IconButton aria-label={`Salary history of ${e.full_name}`} onClick={() => setHistoryOf(e)}>
+                      <HistoryIcon fontSize="small" />
+                    </IconButton>
                     <IconButton aria-label={`Edit ${e.full_name}`} onClick={() => setEditing(e)}>
                       <EditIcon fontSize="small" />
                     </IconButton>
@@ -283,6 +289,10 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
           onClose={() => setEditing(null)}
           onSaved={() => afterChange(editing === 'new' ? 'Employee added' : 'Changes saved')}
         />
+      )}
+
+      {historyOf && (
+        <SalaryHistoryDialog employee={historyOf} onClose={() => setHistoryOf(null)} onChanged={load} />
       )}
 
       <Snackbar
