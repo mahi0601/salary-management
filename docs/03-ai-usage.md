@@ -15,9 +15,16 @@ AI assistance is disclosed here as the assessment requests.
    traversal. Each has a test.
 
 ## Prompts / instructions used
-- Initial prompt: the assessment document plus "finish it correctly".
-- Standing constraints I applied to the assistant: match the surrounding code style, keep routers
-  thin, prefer pure functions for logic, tests must be fast and deterministic, commit in small steps.
+Prompts given to the assistant, in order (paraphrased lightly, none omitted):
+1. The assessment PDF and the invitation email, with the instruction "finish it correctly".
+2. Follow-up: review the code so it reads like a senior developer wrote it (short, plain,
+   human comments; sensible names), and host it. Result: comment pass in `refactor: tighten comments`.
+3. Hosting choices (GitHub public repo, Render) were answered when the assistant asked.
+4. Commit attribution lines were removed at my request; this document is the disclosure instead.
+5. Final request: re-check the PDF against the repo and track what is done (checklist in the README).
+
+Standing constraints applied: match the surrounding code style, keep routers thin, prefer pure
+functions for logic, tests must be fast and deterministic, commit in small steps.
 
 ## Where human judgment is required
 - The assumptions in `01-requirements.md` (annual base salary, email as identity, static FX) are
