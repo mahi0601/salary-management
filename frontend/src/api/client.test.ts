@@ -1,6 +1,10 @@
-import { ApiError, api, buildQuery } from './client'
+import { ApiError, api, buildQuery, session, setSignedOutHandler } from './client'
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  session.clear()
+  setSignedOutHandler(() => {})
+})
 
 function mockFetch(status: number, body: unknown) {
   return vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -57,5 +61,71 @@ describe('api', () => {
     mockFetch(204, null)
 
     await expect(api.deleteEmployee(1)).resolves.toBeUndefined()
+  })
+})
+
+describe('sign-in handling', () => {
+  it('sends the saved token as a bearer header', async () => {
+    session.save('abc123')
+    const spy = mockFetch(200, { email: 'hr@acme.com' })
+
+    await api.me()
+
+    const init = spy.mock.calls[0][1] as RequestInit
+    expect(init.headers).toMatchObject({ Authorization: 'Bearer abc123' })
+  })
+
+  it('sends no Authorization header when signed out', async () => {
+    const spy = mockFetch(200, {})
+
+    await api.getMeta()
+
+    expect((spy.mock.calls[0][1] as RequestInit).headers).not.toHaveProperty('Authorization')
+  })
+
+  it('forgets the token and tells the app when the server says 401', async () => {
+    session.save('expired')
+    const signedOut = vi.fn()
+    setSignedOutHandler(signedOut)
+    mockFetch(401, { detail: 'Please sign in' })
+
+    await expect(api.getMeta()).rejects.toMatchObject({ status: 401 })
+
+    expect(session.token()).toBeNull()
+    expect(signedOut).toHaveBeenCalledOnce()
+  })
+
+  it('a wrong password is just an error, not a sign-out', async () => {
+    const signedOut = vi.fn()
+    setSignedOutHandler(signedOut)
+    mockFetch(401, { detail: 'Incorrect email or password' })
+
+    await expect(api.login('a@b.com', 'x')).rejects.toThrow('Incorrect email or password')
+
+    expect(signedOut).not.toHaveBeenCalled()
+  })
+})
+
+describe('downloadCsv', () => {
+  it('fetches with the token and saves the file', async () => {
+    session.save('abc123')
+    const spy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('id,name\n1,Asha', { status: 200 }))
+    URL.createObjectURL = vi.fn(() => 'blob:fake')
+    URL.revokeObjectURL = vi.fn()
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    await api.downloadCsv({ country: 'IN' }, 'full_name', 'asc')
+
+    expect(spy.mock.calls[0][0]).toBe('/api/employees/export.csv?country=IN&sort_by=full_name&order=asc')
+    expect((spy.mock.calls[0][1] as RequestInit).headers).toMatchObject({ Authorization: 'Bearer abc123' })
+    expect(click).toHaveBeenCalledOnce()
+  })
+
+  it('throws when the export fails', async () => {
+    mockFetch(500, { detail: 'boom' })
+
+    await expect(api.downloadCsv({}, 'full_name', 'asc')).rejects.toThrow('boom')
   })
 })

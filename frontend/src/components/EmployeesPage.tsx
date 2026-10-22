@@ -173,8 +173,9 @@ export default function EmployeesPage({ meta, onDataChanged }: Props) {
         <Box sx={{ flexGrow: 1 }} />
         <Button
           startIcon={<DownloadIcon />}
-          href={api.exportUrl(JSON.parse(filterKey), sortBy, order)}
-          download
+          onClick={() =>
+            api.downloadCsv(JSON.parse(filterKey), sortBy, order).catch((e: Error) => setError(e.message))
+          }
         >
           Export CSV
         </Button>
