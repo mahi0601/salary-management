@@ -126,3 +126,36 @@ class TestRowValidation:
 
         assert parsed.errors == [] and len(parsed.employees) == 1
         assert importer.TEMPLATE_CSV.splitlines()[0].split(",") == HEADER
+
+
+class TestPlainMessages:
+    def message(self, **override):
+        parsed = importer.parse("p.csv", csv_bytes([good_row(1, **override)]))
+        [error] = parsed.errors
+        return error.message
+
+    def test_blank_cell(self):
+        assert self.message(job_title="") == "Required"
+
+    def test_salary_that_is_not_a_number(self):
+        assert self.message(salary="lots") == "Must be a whole number, like 120000"
+
+    def test_salary_with_decimals(self):
+        assert self.message(salary="1200.5") == "Must be a whole number, like 120000"
+
+    def test_zero_or_negative_salary(self):
+        assert self.message(salary=-5) == "Must be a whole number above 0"
+
+    def test_unparseable_date(self):
+        assert self.message(hire_date="last spring") == "Use a date like 2023-05-01"
+
+    def test_bad_email(self):
+        assert self.message(email="nope") == "Not a valid email address"
+
+    def test_unknown_country_lists_the_valid_codes(self):
+        message = self.message(country="ZZ")
+
+        assert message.startswith("Unsupported country") and "'US'" in message and "'us'" not in message
+
+    def test_future_hire_date(self):
+        assert self.message(hire_date="2999-01-01") == "Hire date cannot be in the future"

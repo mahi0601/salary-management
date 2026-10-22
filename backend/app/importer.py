@@ -46,7 +46,7 @@ def parse(filename: str, content: bytes) -> ParsedImport:
         try:
             employee = EmployeeIn(**raw)
         except ValidationError as exc:
-            errors += [RowError(number, str(e["loc"][0]) if e["loc"] else "row", e["msg"]) for e in exc.errors()]
+            errors += [RowError(number, str(e["loc"][0]) if e["loc"] else "row", _plain(e)) for e in exc.errors()]
             continue
         earlier = first_row_of_email.setdefault(employee.email, number)
         if earlier != number:
@@ -54,6 +54,25 @@ def parse(filename: str, content: bytes) -> ParsedImport:
             continue
         employees.append((number, employee))
     return ParsedImport(total_rows=len(rows), employees=employees, errors=errors)
+
+
+def _plain(error: dict) -> str:
+    """Pydantic's wording is for developers; this is read by whoever prepared the spreadsheet."""
+    kind, field, message = error["type"], str(error["loc"][0]) if error["loc"] else "", error["msg"]
+    if kind in ("string_too_short", "missing"):
+        return "Required"
+    if kind in ("int_parsing", "int_from_float", "int_type"):
+        return "Must be a whole number, like 120000"
+    if kind in ("greater_than", "less_than_equal"):
+        return "Must be a whole number above 0"
+    if kind.startswith("date"):
+        return "Use a date like 2023-05-01"
+    if field == "email":
+        return "Not a valid email address"
+    if kind == "value_error":
+        text = message.removeprefix("Value error, ").replace("_", " ")  # "hire_date" -> "hire date"
+        return text[:1].upper() + text[1:]  # not .capitalize(): it would lowercase the country codes
+    return message
 
 
 def _read_table(filename: str, content: bytes) -> list[tuple[int, dict[str, Any]]]:
